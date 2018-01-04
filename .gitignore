@@ -1,0 +1,11 @@
+
+###> symfony/framework-bundle ###
+.env
+/public/bundles/
+/var/
+/vendor/
+###< symfony/framework-bundle ###
+
+###> jetbrains based ide meta files ###
+.idea
+###< jetbrains based ide meta files ###
