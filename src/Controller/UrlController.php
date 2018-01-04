@@ -9,6 +9,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\Config\Definition\Exception\Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Generator\UrlGenerator;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class UrlController extends Controller
@@ -43,8 +44,24 @@ class UrlController extends Controller
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($url);
         $entityManager->flush();
+        $shortedUrl = $this->generateUrl('url_go', ['key' => self::convertIntToKey($url->getId())], UrlGenerator::ABSOLUTE_URL);
 
-        return new Response(self::convertIntToKey($url->getId()));
+        return $this->render('url.html.twig', ['title' => 'Urlx', 'url' => $shortedUrl]);
+    }
+
+    /**
+     * @Route("/g/{key}", name="url_go", requirements={"key"="[a-zA-Z_-]+"})
+     */
+    public function go($key)
+    {
+        $id = self::convertKeyToInt($key);
+        $url = $this->getDoctrine()->getRepository(Url::class)->find($id);
+
+        if (!$url) {
+            throw $this->createNotFoundException("Url not found");
+        }
+
+        return $this->redirect($url->getValue());
     }
 
     /**
