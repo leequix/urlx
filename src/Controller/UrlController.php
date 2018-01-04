@@ -2,11 +2,14 @@
 
 namespace App\Controller;
 
+use App\Entity\Url;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\Config\Definition\Exception\Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class UrlController extends Controller
 {
@@ -22,13 +25,87 @@ class UrlController extends Controller
      * @Route("/url", name="url_add")
      * @Method("POST")
      */
-    public function add(Request $request)
+    public function add(Request $request, ValidatorInterface $validator)
     {
-        $protocol = $request->request->get("protocol");
-        $url = $request->request->get("url");
+        $protocol = $request->request->get('protocol');
+        $address = $request->request->get('url');
 
-        $fullUrl = $protocol . $url;
+        $url = new Url();
+        $url->setValue($protocol . $address);
 
-        return new Response($fullUrl);
+        $errors = $validator->validate($url);
+
+        if (count($errors) > 0) {
+            $this->addFlash('error', $errors->get(0)->getMessage());
+            return $this->redirect($this->generateUrl('url_index'));
+        }
+
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->persist($url);
+        $entityManager->flush();
+
+        return new Response(self::convertIntToKey($url->getId()));
+    }
+
+    /**
+     * Convert number to key
+     * @param integer $number
+     * @return string
+     */
+    public static function convertIntToKey($number)
+    {
+        $letters = self::getKeyLetters();
+        $key = '';
+
+        if ($number <= 0) {
+            throw new Exception('Id must be greater than 0');
+        }
+
+        while ($number) {
+            $index = $number % (count($letters) / 2);
+            $key = $letters[$index] . $key;
+            $number = (integer)($number / (count($letters) / 2));
+        }
+
+        return $key;
+    }
+
+    /**
+     * Convert key to number
+     * @param string $key
+     * @return integer
+     */
+    public static function convertKeyToInt($key)
+    {
+        $letters = self::getKeyLetters();
+        $number = 0;
+
+        for($i = 0; $i < strlen($key); $i++)
+        {
+            $number += pow(count($letters) / 2, strlen($key) - $i - 1) * $letters[$key[$i]];
+        }
+
+        return $number;
+    }
+
+    public static function getKeyLetters()
+    {
+        $letters = [];
+        $incrementer = 0;
+
+        for ($i = 65; $i < 91; $i++) {
+            $letters[$incrementer++] = chr($i);
+            $letters[$incrementer++] = mb_strtolower(chr($i));
+        }
+        $letters[$incrementer++] = '_';
+        $letters[$incrementer] = '-';
+
+        $lettersSize = count($letters);
+        for($i = 0; $i < $lettersSize; $i++)
+        {
+            $letters[$letters[$i]] = $i;
+        }
+
+        return $letters;
     }
 }
