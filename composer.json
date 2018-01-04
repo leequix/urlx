@@ -52,7 +52,6 @@
             "@auto-scripts"
         ],
         "compile": [
-            "composer update",
             "php bin/console doctrine:migrations:migrate",
             "php bin/console cache:clear"
         ]
