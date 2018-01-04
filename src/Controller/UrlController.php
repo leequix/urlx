@@ -5,6 +5,7 @@ namespace App\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class UrlController extends Controller
@@ -21,8 +22,13 @@ class UrlController extends Controller
      * @Route("/url", name="url_add")
      * @Method("POST")
      */
-    public function add()
+    public function add(Request $request)
     {
-        return new Response("Added!");
+        $protocol = $request->request->get("protocol");
+        $url = $request->request->get("url");
+
+        $fullUrl = $protocol . $url;
+
+        return new Response($fullUrl);
     }
 }

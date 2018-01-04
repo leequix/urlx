@@ -11,7 +11,7 @@
         <h1>{{ title }}</h1>
         <p class="lead">The url shorter</p>
         <form method="POST" action="/url">
-            <label for="basic-url">Your loooo000000000000000ooooooooong URL</label>
+            <label for="url">Your loooo000000000000000ooooooooong URL</label>
             <div class="input-group mb-3">
                 <div class="input-group-prepend">
                     <select class="form-control input-group-text" name="protocol">
@@ -19,7 +19,7 @@
                         <option>https://</option>
                     </select>
                 </div>
-                <input type="text" class="form-control" id="basic-url" aria-describedby="basic-addon3">
+                <input type="text" class="form-control" id="url" name="url" aria-describedby="basic-addon3">
             </div>
             <button class="btn btn-lg btn-primary">Short my url</button>
         </form>
