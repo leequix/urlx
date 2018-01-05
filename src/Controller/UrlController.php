@@ -110,7 +110,7 @@ class UrlController extends Controller
 
         $this->logger->debug("Return redirect to user");
         $this->logger->info("User redirected from shorted url with id " . $id . " to " . $url->getValue());
-        return $this->redirect($url->getValue());
+        return $this->redirect($url->getValue(), 301);
     }
 
     /**
