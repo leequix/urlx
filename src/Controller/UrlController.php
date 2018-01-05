@@ -53,7 +53,7 @@ class UrlController extends Controller
         ];
 
         if (!in_array($protocol, $availableProtocols)) {
-            $this->logger->warning("User tried to shorten URL with unavailable protocol, but was stopped by system (may be hacked attempt)");
+            $this->logger->warning("User tried to shorten URL with unavailable protocol " . $protocol . ", but was stopped by system (may be hacked attempt)");
             $message = "You can shorten url only with available protocols";
             $errors->add(new ConstraintViolation($message, $message, [], '', '', null));
         }
