@@ -2,14 +2,14 @@ monolog:
     handlers:
         main:
             type: fingers_crossed
-            action_level: error
+            action_level: info
             handler: nested
             excluded_404s:
                 # regex: exclude all 404 errors from the logs
                 - ^/
         nested:
             type: stream
-            path: "php://stdout"
+            path: "php://stderr"
             level: debug
         console:
             type:   console
