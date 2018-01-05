@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Url;
+use Psr\Log\LoggerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -10,10 +11,18 @@ use Symfony\Component\Config\Definition\Exception\Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Generator\UrlGenerator;
+use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class UrlController extends Controller
 {
+    private $logger;
+
+    public function __construct(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+    }
+
     /**
      * @Route("/", name="url_index")
      */
@@ -30,22 +39,55 @@ class UrlController extends Controller
     {
         $protocol = $request->request->get('protocol');
         $address = $request->request->get('url');
+        $this->logger->debug("Trying create new url " . $protocol . $address);
 
         $url = new Url();
         $url->setValue($protocol . $address);
 
+        $this->logger->debug("Validation of url");
         $errors = $validator->validate($url);
+
+        $availableProtocols = [
+            "http://",
+            "https://"
+        ];
+
+        if (!in_array($protocol, $availableProtocols)) {
+            $this->logger->warning("User tried to shorten URL with unavailable protocol, but was stopped by system (may be hacked attempt)");
+            $message = "You can shorten url only with available protocols";
+            $errors->add(new ConstraintViolation($message, $message, [], '', '', null));
+        }
+        if (!strpos($address)) {
+            $this->logger->info("User tried to shorten URL with domain level less than 2, but was stopped by system");
+            $message = "You can shorten url with domain level not less than 2";
+            $errors->add(new ConstraintViolation($message, $message, [], '', '', null));
+        }
+        if (substr($address, -1) === ".") {
+            $this->logger->info("User tried to shorten URL with root domain, but was stopped by system");
+            $message = "Please, don't use root domain in url";
+            $errors->add(new ConstraintViolation($message, $message, [], '', '', null));
+        }
 
         if (count($errors) > 0) {
             $this->addFlash('error', $errors->get(0)->getMessage());
             return $this->redirect($this->generateUrl('url_index'));
         }
 
+        $this->logger->debug("Trying to create row at db");
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($url);
         $entityManager->flush();
+        if ($url->getId()) {
+            $this->logger->debug("Row successfully created");
+        } else {
+            $this->logger->error("Error of inserting url " . $url->getValue() . " to db");
+            throw new Exception("Can't add url " . $url->getValue() . " to db");
+        }
+        $this->logger->debug("Start generation of url");
         $shortedUrl = $this->generateUrl('url_go', ['key' => self::convertIntToKey($url->getId())], UrlGenerator::ABSOLUTE_URL);
 
+        $this->logger->debug("Return shorted url to user");
+        $this->logger->info("User shorted URL " . $url->getValue() . " to " . $shortedUrl);
         return $this->render('url.html.twig', ['title' => 'Urlx', 'url' => $shortedUrl]);
     }
 
