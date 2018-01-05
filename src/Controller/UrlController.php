@@ -57,7 +57,7 @@ class UrlController extends Controller
             $message = "You can shorten url only with available protocols";
             $errors->add(new ConstraintViolation($message, $message, [], '', '', null));
         }
-        if (!strpos($address)) {
+        if (!strpos($address, ".")) {
             $this->logger->info("User tried to shorten URL with domain level less than 2, but was stopped by system");
             $message = "You can shorten url with domain level not less than 2";
             $errors->add(new ConstraintViolation($message, $message, [], '', '', null));
