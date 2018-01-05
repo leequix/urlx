@@ -96,13 +96,20 @@ class UrlController extends Controller
      */
     public function go($key)
     {
+        $this->logger->debug("Trying convert key " . $key . " to id");
         $id = self::convertKeyToInt($key);
+        $this->logger->debug("Key " . $key . " converted to id " . $id);
+        $this->logger->debug("Trying to fetch row with id " . $id . " from db");
         $url = $this->getDoctrine()->getRepository(Url::class)->find($id);
 
         if (!$url) {
+            $this->logger->info("User not found our shorted url with key " . $key);
             throw $this->createNotFoundException("Url not found");
         }
+        $this->logger->debug("Row with id " . $id . " and url " . $url->getValue() . " successfully fetched from db");
 
+        $this->logger->debug("Return redirect to user");
+        $this->logger->info("User redirected from shorted url with id " . $id . " to " . $url->getValue());
         return $this->redirect($url->getValue());
     }
 
